@@ -7,7 +7,7 @@ RAMDISK = #-DRAMDISK=512
 AS86	=as86 -0 -a
 LD86	=ld86 -0
 
-AS	=gas
+AS	=as
 LD	=gld
 LDFLAGS	=-s -x -M
 CC	=gcc $(RAMDISK)
