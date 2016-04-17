@@ -8,7 +8,7 @@ RAMDISK = #-DRAMDISK=512
 include Makefile.header
 
 LDFLAGS += -Ttext 0 -e startup_32
-CFLAGS  += $(RAMDISK) -Iinclude
+CFLAGS  += $(RAMDISK) -nostdinc -Iinclude
 CPP += -Iinclude
 
 #
@@ -27,13 +27,11 @@ MATH	=kernel/math/math.a
 LIBS	=lib/lib.a
 
 .c.s:
-	$(CC) $(CFLAGS) \
-	-nostdinc -Iinclude -S -o $*.s $<
+	$(CC) $(CFLAGS) -S -o $*.s $<
 .s.o:
 	$(AS) -o $*.o $<
 .c.o:
-	$(CC) $(CFLAGS) \
-	-nostdinc -Iinclude -c -o $*.o $<
+	$(CC) $(CFLAGS) -c -o $*.o $<
 
 all:	Image
 
