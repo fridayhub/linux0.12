@@ -8,10 +8,10 @@ AS86	=as86 -0 -a
 LD86	=ld86 -0
 
 AS	=as
-LD	=ld
+LD	=ld -e startup_32 -Ttext 0
 LDFLAGS	=-s -x -M
 CC	=gcc $(RAMDISK)
-CFLAGS	=-Wall -O -fstrength-reduce -fomit-frame-pointer
+CFLAGS	=-Wall -O -fleading-underscore -fstrength-reduce -fomit-frame-pointer
 CPP	=cpp -nostdinc -Iinclude
 
 #

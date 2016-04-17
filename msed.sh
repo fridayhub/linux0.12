@@ -12,5 +12,7 @@ function mgrep(){
 #mgrep as
 #msed gld ld
 #mgrep ld
-msed gar ar
-mgrep ar
+#msed gar ar
+#mgrep ar
+msed -O -O\ -fleading-underscore
+mgrep \-O\ \-fleading\-underscore
