@@ -1,0 +1,234 @@
+下载内核linux0.12
+ftp://ftp.kernel.org/pub/linux/kernel/Historic/old-versions/
+解压后进入内核目录
+建立git以便记录修改和回退错误修改。
+开始修改内核
+1 内核汇编器用的gas，现在已经被as取代，所以需要替换所有makefile中的gas：
+shell脚本：
+#!/bin/bash
+
+function msed(){
+        find -name "Makefile" -exec sed -i "s/$1/$2/g" {} \;
+}
+
+function mgrep(){
+        find -name "Makefile" | xargs grep $1 --color
+}
+
+msed gas as
+mgrep as
+
+2 make
+make: as86: Command not found
+sudo yum install dev86*
+
+3 make
+as: unrecognized option '-c'
+出错原因：as 语法和1991年的时候有了一些变化
+解决办法：
+修改 Makefile 文件
+将 $(AS) -c -o $*.o $<  修改为 $(AS) -o $*.o $<
+
+4 make
+boot/head.s:231: Error: alignment not a power of 2
+make: *** [boot/head.o] Error 1
+
+出错原因：.align 2 是汇编语言指示符，其含义是指存储边界对齐调整；
+“2”表示把随后的代码或数据的偏移位置调整到地址值最后2比特位为零的位置（2^2），即按4字节对齐内存地址。
+不过现在GNU as直接是写出对齐的值而非2的次方值了。
+
+ .align 2 应该改为 .align 4
+ .align 3 应该改为 .align 8
+
+解决办法：
+
+修改 boot/head.s 文件
+
+将   .align 2 应该改为 .align 4
+     .align 3 应该改为 .align 8
+
+5 make
+gcc: error: unrecognized command line option ‘-fcombine-regs’
+gcc: error: unrecognized command line option ‘-mstring-insns’
+make: *** [init/main.o] Error 1
+
+解决办法：
+修改 Makefile 文件
+将 -fcombine-regs -mstring-insns 删除或者注释掉
+
+6 make
+init/main.c:179:12: error: static declaration of ‘printf’ follows non-static declaration
+ static int printf(const char *fmt, ...)
+猜测应该也是由于GCC本身对printf这个函数名有特别的关照所致，所以把printf稍微改下名，printf -> printw
+解决办法:
+sed -i 's/ printf/ printw/g' init/main.c
+
+7 make
+    init/main.c:23:29: error: static declaration of ‘fork’ follows non-static declaration
+static inline _syscall0(int,fork)
+    ^
+    init/main.c:24:29: error: static declaration of ‘pause’ follows non-static declaration
+static inline _syscall0(int,pause)
+    ^
+    init/main.c:26:29: error: static declaration of ‘sync’ follows non-static declaration
+static inline _syscall0(int,sync)
+
+解决办法：
+
+    修改 init/main.c 文件
+    将 static inline _syscall0(int,fork)   修改为 inline _syscall0(int,fork)
+    static inline _syscall0(int,pause)  修改为 inline _syscall0(int,pause)
+    static inline _syscall1(int,setup,void *,BIOS)  修改为 inline _syscall1(int,setup,void *,BIOS) static inline _syscall0(int,sync)  修改为 inline _syscall0(int,sync)
+
+
+8 make
+init/main.c:176:3: error: ‘asm’ operand has impossible constraints
+   __asm__("int $0x80"::"a" (__NR_pause):"ax");
+
+   类似的问题在后面编译中出现好多，C内嵌汇编的格式__asm__(汇编语句：输入寄存器：输出寄存器：可能被修改的寄存器），最新的GCC规定输入或输出寄存器不能出现在可能被修改的寄存器中，目前看到网上的方法是把所有类似问题的可能被修改的寄存器全部删掉。
+
+具体解决方法:
+find -type f -exec sed -i 's/:\"\w\{2\}\"\(,\"\w\{2\}\"\)*)/:) /g' {} \;
+
+9 make
+make[1]: gld: Command not found
+同gas, 把gld -> ld
+
+10 make
+../include/asm/segment.h:27: Error: bad register name `%sil'
+出错原因：
+fs 目录下的 Makefile 中编译选项使用了 -O 优化选项导致寄存器错误
+
+解决方法：
+将fs目录下的Makefile 文件中的 
+CFLAGS =-Wall -O -fstrength-reduce -fomit-frame-pointer \ 
+修改为
+CFLAGS =-Wall -fstrength-reduce -fomit-frame-pointer \
+
+11 make
+exec.c:162:44: error: lvalue required as left operand of assignment
+         !(pag = (char *) page[p/PAGE_SIZE] =
+
+if (!(pag = (char *) page[p/PAGE_SIZE]) &&
+        !(pag = (char *) page[p/PAGE_SIZE] =
+                  (unsigned long *) get_free_page())) 
+    return 0;
+以上是原始code，以下是OK的code
+
+if ((!page[p/PAGE_SIZE]) &&                                                                                                      
+    !(page[p/PAGE_SIZE] =
+        (unsigned long *) get_free_page())) 
+   return 0;                                                                                                                   
+else
+    pag = (char *) page[p/PAGE_SIZE];
+
+12 make
+blk.h:90:6: error: #elif with no expression
+ #elif
+
+这里把第90行的#elif -> #else
+
+13 make
+make[1]: gar: Command not found
+gar -> ar
+
+14 make
+malloc.c: In function ‘malloc’:
+malloc.c:156:46: error: lvalue required as left operand of assignment
+   bdesc->page = bdesc->freeptr = (void *) cp = get_free_page();
+   和问题11一样
+
+   bdesc->page = bdesc->freeptr = (void *) cp = get_free_page();
+   上面是原始的，下面是OK的，把代码拆分下就好
+
+   cp = get_free_page();
+   bdesc->page = bdesc->freeptr = (void *) cp;
+
+15 make 
+一堆的undefined reference to xxxxx
+stack_start 定义在kernel/sched.c中，main 定义在init/main.c中，实际上这些符号是存在的，可为什么链接的时候找不到呢。最终找到原因，是由于现在GCC在编译C时不会在函数前加"_"了，即以前GCC编译一个C函数，例如：fun() 编译后会变成_fun(), 而现在还是fun()，所以就导致了符号找不到，这个叫name magling，有兴趣的可以自行google下。
+
+解决的思路有两种：
+
+1. 网上的是把把有引用C符号的.s 和 .S中的变量前的"_"全部删掉，这个用正则不太好弄，得一个个删。
+
+2. 在查name magling的时候，有幸让我看到了-fleading-underscore这个option, 可以让让GCC在编译的时候强制加上"_"，这种只需要在CFLAGS中加-fleading-underscore即可，第二种方法更省事。
+
+方案2具体解决方法
+
+msed -O -O\ -fleading-underscore
+请记得在改完后，make clean，后再make。
+
+给head.s的 .text 段添加一句 .globl startup_32，然后给 ./Makefile 中的ld加上选项 -e startup_32 以指定入口点。还需添加 -Ttext 0 选项使startup_32标号对应的地址为0x0
+
+
+16 make
+build.c:(.text+0x1c): undefined reference to `_stderr'
+build.c:(.text+0x24): undefined reference to `___fprintf_chk'
+这个问题是由问题1的解决方案引入的，build.c链接时用的是glibc，而glibc在是没-fleading-underscore这个option的，所以在编译build.c时我们 把这个option去掉。。。，目前没找到什么好方法，我只好手动把CFLAGS展开，然后去掉-fleading-underscore了
+
+修改linux0.12根目录下的Makefile第50行
+
+tools/build: tools/build.c
+$(CC) $(CFLAGS) \
+        -o tools/build tools/build.c
+上面是原来的，下面是展开后的
+
+tools/build: tools/build.c
+$(CC) -w -O -fno-stack-protector -m32 -fstrength-reduce -fomit-frame-pointer \
+-o tools/build tools/build.c
+
+
+17 make
+build.c:(.text+0xcb): undefined reference to `MAJOR'
+build.c:(.text+0xe3): undefined reference to `MINOR'
+build.c:(.text+0x16c): undefined reference to `MAJOR'
+build.c:(.text+0x184): undefined reference to `MINOR'
+
+18 make
+/dev/hd6: No such file or directory
+Couldn't stat root device.
+这个是在linux0.12根目录下的Makefile中定义的
+
+ROOT_DEV=/dev/hd6
+SWAP_DEV=/dev/hd2
+但我们没这东西，阅读build.c 代码，了解到这里可以写成FLOPPY代替/dev/hd6
+if (argc > 4) {
+    if (strcmp(argv[4], "FLOPPY")) {
+        if (stat(argv[4], &sb)) {
+            perror(argv[4]);
+            die("Couldn't stat root device.");
+        }
+        major_root = MAJOR(sb.st_rdev);
+        minor_root = MINOR(sb.st_rdev);
+    } else {
+        major_root = 0;
+        minor_root = 0;
+    }
+} else {
+    major_root = DEFAULT_MAJOR_ROOT;
+    minor_root = DEFAULT_MINOR_ROOT;
+}
+
+19 make
+/dev/hd2: No such file or directory
+Couldn't stat root device.
+make: *** [Image] Error 1
+与上个问题类似，相同的地方，阅读build.c，可以用NONE代替/dev/hd2
+
+if (argc == 6) {
+    if (strcmp(argv[5], "NONE")) {
+        if (stat(argv[5], &sb)) {
+            perror(argv[5]);
+            die("Couldn't stat root device.");
+        }
+        major_swap = MAJOR(sb.st_rdev);
+        minor_swap = MINOR(sb.st_rdev);
+    } else {
+        major_swap = 0;
+        minor_swap = 0;
+    }
+} else {
+    major_swap = DEFAULT_MAJOR_SWAP;
+    minor_swap = DEFAULT_MINOR_SWAP;
+}
