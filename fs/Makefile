@@ -2,8 +2,8 @@ AR	=gar
 AS	=as
 CC	=gcc
 LD	=gld
-CFLAGS	=-Wall -O -fstrength-reduce -fcombine-regs -fomit-frame-pointer \
-	-fno-defer-pop -mstring-insns -nostdinc -I../include
+CFLAGS	=-Wall -O -fstrength-reduce -fomit-frame-pointer \
+	-fno-defer-pop -nostdinc -I../include
 CPP	=gcc -E -nostdinc -I../include
 
 .c.s:
