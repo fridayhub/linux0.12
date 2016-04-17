@@ -47,7 +47,7 @@ disk: Image
 	dd bs=8192 if=Image of=/dev/PS0
 
 tools/build: tools/build.c
-	$(CC) $(CFLAGS) \
+	$(CC) -w -O -fno-stack-protector -m32 -fstrength-reduce -fomit-frame-pointer \
 	-o tools/build tools/build.c
 
 boot/head.o: boot/head.s

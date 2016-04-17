@@ -48,6 +48,9 @@
 
 #define STRINGIFY(x) #x
 
+#define MAJOR(x) (((unsigned)(x))>>8)
+#define MINOR(x) ((x)&0xff)
+
 void die(char * str)
 {
 	fprintf(stderr,"%s\n",str);
