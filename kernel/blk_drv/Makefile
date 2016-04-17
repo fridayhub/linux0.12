@@ -9,7 +9,7 @@
 include ../../Makefile.header
 
 CFLAGS	+= -I../../include
-CPP	+=-I../../include
+CPP	+= -I../../include
 
 .c.s:
 	$(CC) $(CFLAGS) \
