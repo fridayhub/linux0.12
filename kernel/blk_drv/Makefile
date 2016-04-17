@@ -6,14 +6,10 @@
 # unless it's something special (ie not a .c file).
 #
 
-AR	=ar
-AS	=as
-LD	=ld
-LDFLAGS	=-s -x
-CC	=gcc
-CFLAGS	=-Wall -O -fleading-underscore -fstrength-reduce -fomit-frame-pointer \
-	-finline-functions -nostdinc -I../../include
-CPP	=gcc -E -nostdinc -I../../include
+include ../../Makefile.header
+
+CFLAGS	+= -I../../include
+CPP	+=-I../../include
 
 .c.s:
 	$(CC) $(CFLAGS) \

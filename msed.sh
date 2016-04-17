@@ -14,5 +14,12 @@ function mgrep(){
 #mgrep ld
 #msed gar ar
 #mgrep ar
-msed -O -O\ -fleading-underscore
-mgrep \-O\ \-fleading\-underscore
+#msed -O -O\ -fleading-underscore
+#mgrep \-O\ \-fleading\-underscore
+
+#for 64
+#msed ld$ ld\ -m\ elf_i386
+#mgrep elf_i386
+
+#msed as$ as\ --32
+msed -O -O\ -m32

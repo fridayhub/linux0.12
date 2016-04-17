@@ -1,10 +1,8 @@
-AR	=ar
-AS	=as
-CC	=gcc
-LD	=ld
-CFLAGS	=-Wall -O -fleading-underscore -fstrength-reduce -fomit-frame-pointer \
-	-fno-defer-pop -nostdinc -I../include
-CPP	=gcc -E -nostdinc -I../include
+include ../Makefile.header
+
+LDFLAGS += -r
+CFLAGS  += -I../include
+CPP	+= -I../include
 
 .c.s:
 	$(CC) $(CFLAGS) \
@@ -20,7 +18,7 @@ OBJS=	open.o read_write.o inode.o file_table.o buffer.o super.o \
 	bitmap.o fcntl.o ioctl.o truncate.o select.o
 
 fs.o: $(OBJS)
-	$(LD) -r -o fs.o $(OBJS)
+	$(LD) $(LDFLAGS) -r -o fs.o $(OBJS)
 
 clean:
 	rm -f core *.o *.a tmp_make

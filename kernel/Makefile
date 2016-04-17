@@ -6,15 +6,11 @@
 # unless it's something special (ie not a .c file).
 #
 
-AR	=ar
-AS	=as
-LD	=ld
-LDFLAGS	=-s -x
-CC	=gcc
-CFLAGS	=-Wall -O -fleading-underscore -fstrength-reduce -fomit-frame-pointer \
-	-finline-functions -nostdinc -I../include
-CPP	=gcc -E -nostdinc -I../include
+include ../Makefile.header
 
+CFLAGS += -I../include
+
+LDFLAGS += -r
 .c.s:
 	$(CC) $(CFLAGS) \
 	-S -o $*.s $<
@@ -29,7 +25,7 @@ OBJS  = sched.o sys_call.o traps.o asm.o fork.o \
 	signal.o mktime.o
 
 kernel.o: $(OBJS)
-	$(LD) -r -o kernel.o $(OBJS)
+	$(LD) $(LDFLAGS) -r -o kernel.o $(OBJS)
 	sync
 
 clean:

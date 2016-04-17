@@ -4,21 +4,20 @@
 #
 RAMDISK = #-DRAMDISK=512
 
-AS86	=as86 -0 -a
-LD86	=ld86 -0
+# This is a basic Makefile for setting the general configuration
+include Makefile.header
 
-AS	=as
-LD	=ld -e startup_32 -Ttext 0
-LDFLAGS	=-s -x -M
-CC	=gcc $(RAMDISK)
-CFLAGS	=-Wall -O -fleading-underscore -fstrength-reduce -fomit-frame-pointer
-CPP	=cpp -nostdinc -Iinclude
+LDFLAGS += -Ttext 0 -e startup_32
+CFLAGS  += $(RAMDISK) -Iinclude
+CPP += -Iinclude
 
 #
 # ROOT_DEV specifies the default root-device when making the image.
 # This can be either FLOPPY, /dev/xxxx or empty, in which case the
 # default of /dev/hd6 is used by 'build'.
 # hakits modify refer to tool/build judge argc 4 and argc 6 in func main
+#ROOT_DEV= 021d # FLOPPY B
+#ROOT_DEV= 0301 # hd1
 ROOT_DEV=FLOPPY
 SWAP_DEV=NONE
 
@@ -47,14 +46,14 @@ disk: Image
 	dd bs=8192 if=Image of=/dev/PS0
 
 tools/build: tools/build.c
-	$(CC) -w -O -fno-stack-protector -m32 -fstrength-reduce -fomit-frame-pointer \
+	$(CC) -w -O -m32 -fno-stack-protector -fstrength-reduce -fomit-frame-pointer \
 	-o tools/build tools/build.c
 
 boot/head.o: boot/head.s
 
 tools/system:	boot/head.o init/main.o \
 		$(ARCHIVES) $(DRIVERS) $(MATH) $(LIBS)
-	$(LD) $(LDFLAGS) boot/head.o init/main.o \
+	$(LD) $(LDFLAGS)  boot/head.o init/main.o \
 	$(ARCHIVES) \
 	$(DRIVERS) \
 	$(MATH) \

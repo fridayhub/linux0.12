@@ -1,10 +1,9 @@
-CC	=gcc
-CFLAGS	=-O -fleading-underscore -Wall -fstrength-reduce -fomit-frame-pointer \
-	-finline-functions -nostdinc -I../include
-AS	=as
-AR	=ar
-LD	=ld
-CPP	=gcc -E -nostdinc -I../include
+
+include ../Makefile.header
+
+LDFLAGS += -r
+CFLAGS	+= -I../include
+CPP	+= -I../include
 
 .c.o:
 	$(CC) $(CFLAGS) \
@@ -20,7 +19,7 @@ OBJS	= memory.o swap.o page.o
 all: mm.o
 
 mm.o: $(OBJS)
-	$(LD) -r -o mm.o $(OBJS)
+	$(LD) $(LDFLAGS)  -r -o mm.o $(OBJS)
 
 clean:
 	rm -f core *.o *.a tmp_make
