@@ -18,9 +18,9 @@ CPP	=cpp -nostdinc -Iinclude
 # ROOT_DEV specifies the default root-device when making the image.
 # This can be either FLOPPY, /dev/xxxx or empty, in which case the
 # default of /dev/hd6 is used by 'build'.
-#
-ROOT_DEV=/dev/hd6
-SWAP_DEV=/dev/hd2
+# hakits modify refer to tool/build judge argc 4 and argc 6 in func main
+ROOT_DEV=FLOPPY
+SWAP_DEV=NONE
 
 ARCHIVES=kernel/kernel.o mm/mm.o fs/fs.o
 DRIVERS =kernel/blk_drv/blk_drv.a kernel/chr_drv/chr_drv.a
