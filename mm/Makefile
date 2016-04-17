@@ -2,8 +2,8 @@ CC	=gcc
 CFLAGS	=-O -Wall -fstrength-reduce -fomit-frame-pointer \
 	-finline-functions -nostdinc -I../include
 AS	=as
-AR	=gar
-LD	=gld
+AR	=ar
+LD	=ld
 CPP	=gcc -E -nostdinc -I../include
 
 .c.o:

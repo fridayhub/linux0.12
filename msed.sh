@@ -8,5 +8,9 @@ function mgrep(){
     find -name "Makefile" | xargs grep $1 --color
 }
 
-msed gas as
-mgrep as
+#msed gas as
+#mgrep as
+#msed gld ld
+#mgrep ld
+msed gar ar
+mgrep ar

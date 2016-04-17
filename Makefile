@@ -8,7 +8,7 @@ AS86	=as86 -0 -a
 LD86	=ld86 -0
 
 AS	=as
-LD	=gld
+LD	=ld
 LDFLAGS	=-s -x -M
 CC	=gcc $(RAMDISK)
 CFLAGS	=-Wall -O -fstrength-reduce -fomit-frame-pointer
