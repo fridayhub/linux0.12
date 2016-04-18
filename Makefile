@@ -18,7 +18,7 @@ CPP += -Iinclude
 # hakits modify refer to tool/build judge argc 4 and argc 6 in func main
 #ROOT_DEV= 021d # FLOPPY B
 #ROOT_DEV= 0301 # hd1
-ROOT_DEV=FLOPPY
+ROOT_DEV=
 SWAP_DEV=NONE
 
 ARCHIVES=kernel/kernel.o mm/mm.o fs/fs.o
@@ -36,12 +36,13 @@ LIBS	=lib/lib.a
 all:	Image
 
 Image: boot/bootsect boot/setup tools/system tools/build
-	tools/build boot/bootsect boot/setup tools/system $(ROOT_DEV) \
-		$(SWAP_DEV) > Image
+	objcopy -O binary -R .note -R .comment tools/system tools/kernel
+	tools/build boot/bootsect boot/setup tools/kernel $(ROOT_DEV) > Image
+	rm tools/kernel -f
 	sync
 
 disk: Image
-	dd bs=8192 if=Image of=/dev/PS0
+	dd bs=8192 if=Image of=/dev/fd0
 
 tools/build: tools/build.c
 	$(CC) -w -O -m32 -fno-stack-protector -fstrength-reduce -fomit-frame-pointer \
@@ -56,7 +57,8 @@ tools/system:	boot/head.o init/main.o \
 	$(DRIVERS) \
 	$(MATH) \
 	$(LIBS) \
-	-o tools/system > System.map
+	-o tools/system 
+	nm tools/system |grep -v '\(compiled\)\|\(\.o$$\)\|\( [aU] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)'| sort > System.map
 
 kernel/math/math.a:
 	(cd kernel/math; make)
