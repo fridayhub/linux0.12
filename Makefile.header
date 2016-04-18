@@ -1,5 +1,23 @@
 #makefile header, hakits add
 
+#Qemu
+QEMU = qemu-system-i386
+
+# Tool for Image building
+BUILD = tools/build.sh
+
+# Tool for specify root device
+SETROOTDEV = tools/setrootdev.sh
+
+# Specify the Rootfs Image file
+HDA_IMG = hdc-0.11.img
+FLP_IMG = rootimage-0.11
+RAM_IMG = rootram.img
+
+# Tool for call graph generation
+CG = tools/callgraph
+
+
 AS86	=as86 -0 -a
 LD86	=ld86 -0
 

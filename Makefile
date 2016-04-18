@@ -6,6 +6,7 @@ RAMDISK = #-DRAMDISK=512
 
 # This is a basic Makefile for setting the general configuration
 include Makefile.header
+include Makefile.emulators
 
 LDFLAGS += -Ttext 0 -e startup_32
 CFLAGS  += $(RAMDISK) -nostdinc -Iinclude
@@ -35,30 +36,33 @@ LIBS	=lib/lib.a
 
 all:	Image
 
-Image: boot/bootsect boot/setup tools/system tools/build
-	objcopy -O binary -R .note -R .comment tools/system tools/kernel
-	tools/build boot/bootsect boot/setup tools/kernel $(ROOT_DEV) > Image
-	rm tools/kernel -f
-	sync
+Image: boot/bootsect boot/setup kernel.sym
+	@cp -f images/kernel.sym images/kernel.tmp
+	@$(STRIP) images/kernel.tmp
+	@$(OBJCOPY) -O binary -R .note -R .comment images/kernel.tmp images/kernel
+	$(BUILD) boot/bootsect boot/setup images/kernel images/Image
+	@rm images/kernel.tmp
+	@rm images/kernel -f
+	@sync
 
-disk: Image
-	dd bs=8192 if=Image of=/dev/fd0
+#disk: Image
+#	dd bs=8192 if=Image of=/dev/fd0
 
-tools/build: tools/build.c
-	$(CC) -w -O -m32 -fno-stack-protector -fstrength-reduce -fomit-frame-pointer \
-	-o tools/build tools/build.c
+#tools/build: tools/build.c
+#	$(CC) -w -O -m32 -fno-stack-protector -fstrength-reduce -fomit-frame-pointer \
+#	-o tools/build tools/build.c
 
 boot/head.o: boot/head.s
 
-tools/system:	boot/head.o init/main.o \
+kernel.sym:	boot/head.o init/main.o \
 		$(ARCHIVES) $(DRIVERS) $(MATH) $(LIBS)
 	$(LD) $(LDFLAGS)  boot/head.o init/main.o \
 	$(ARCHIVES) \
 	$(DRIVERS) \
 	$(MATH) \
 	$(LIBS) \
-	-o tools/system 
-	nm tools/system |grep -v '\(compiled\)\|\(\.o$$\)\|\( [aU] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)'| sort > System.map
+	-o images/kernel.sym 
+	nm images/kernel.sym |grep -v '\(compiled\)\|\(\.o$$\)\|\( [aU] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)'| sort > images/kernel.map
 
 kernel/math/math.a:
 	(cd kernel/math; make)
@@ -96,9 +100,10 @@ boot/bootsect:	boot/bootsect.s
 	$(LD86) -s -o boot/bootsect boot/bootsect.o
 
 clean:
-	rm -f Image System.map tmp_make core boot/bootsect boot/setup \
+	@make clean -C rootfs
+	rm -f images/Image images/kernel.map tmp_make core boot/bootsect boot/setup \
 		boot/bootsect.s boot/setup.s
-	rm -f init/*.o tools/system tools/build boot/*.o
+	rm -f init/*.o images/kernel.sym tools/build boot/*.o
 	(cd mm;make clean)
 	(cd fs;make clean)
 	(cd kernel;make clean)

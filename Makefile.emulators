@@ -1,0 +1,21 @@
+#Make kernel runing at emulator
+
+hda:
+	@make hda -C rootfs
+
+#VM (Qemu) Setting for rootfs
+
+ROOT_HDA = 0301
+
+SETROOTDEV_CMD = $(SETROOTDEV) Image
+SETROOTDEV_CMD_HDA = $(SETROOTDEV_CMD) $(ROOT_HDA)
+
+QEMU_CMD = $(QEMU) -m 16M -boot a -fda Image
+QEMU_CMD_HDA = $(QEMU_CMD) -hda rootfs/$(HDA_IMG)
+
+VM_CMD_HDA = $(QEMU_CMD_HDA)
+
+#Running on emulators with rootfs
+start-hd: Image hda
+	$(SETROOTDEV_CMD_HDA)
+	$(VM_CMD_HDA)
